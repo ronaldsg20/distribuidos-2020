@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
-#define BUFFER 256
+#define BUFFER 1024
 double **A;
 double **B;
 double **C;
-int dimensions = 256;
+int dimensions = 1024;
 
 void matrix_calculation(double **A, double **B){
     // double matrix_result[dimensions][dimensions];
@@ -15,7 +15,7 @@ void matrix_calculation(double **A, double **B){
     // COLUMNAS DE B
     for (int i = 0; i < dimensions; i++){
         //FILAS DE A
-        for (int j = 2; j < dimensions; j++){
+        for (int j = 0; j < dimensions; j++){
             //COLUMNA DE A POR SU FILA
             for (int k = 0; k < dimensions; k++){
                 c += A[j][k] * A[k][i];
@@ -32,7 +32,7 @@ void set_matrix(){
    char *record,*line;
    int i=0,j=0;
 //    int mat[dimensions][dimensions];
-   FILE *fstream = fopen("../files/256.csv","r");
+   FILE *fstream = fopen("../files/1024.csv","r");
    if(fstream == NULL)
    {
       printf("\n file opening failed ");
