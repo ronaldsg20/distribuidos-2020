@@ -3,11 +3,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
-#define BUFFER 256
+#define BUFFER 1024
 double **A;
 double **B;
 double **C;
-int dimensions = 256;
+int dimensions = 1024;
 
 void matrix_calculation(double **A, double **B){
     // double matrix_result[dimensions][dimensions];
@@ -28,29 +28,36 @@ void matrix_calculation(double **A, double **B){
 
 
 void set_matrix(){ 
-   char buffer[BUFFER] ;
+   char buffer[BUFFER * BUFFER * sizeof(double)] ;
    char *record,*line;
    int i=0,j=0;
-//    int mat[dimensions][dimensions];
-   FILE *fstream = fopen("../files/256.csv","r");
+   int counter = 0;
+   FILE *fstream = fopen("../files/32.csv","r");
    if(fstream == NULL)
    {
       printf("\n file opening failed ");
-      exit(-1);
    }
    while((line=fgets(buffer,sizeof(buffer),fstream))!=NULL)
    {
-        record = strtok(line,";");
-        while(record != NULL)
-        {
-            A[i][j] = atof(record);            
-            // printf("record : %f",A[i][j]) ;    //here you can put the record into the array as per your requirement.
-            // mat[i][j++] = atoi(record) ;
-            record = strtok(NULL,";");
-            ++j;
-        }
-        ++i ;
+     record = strtok(line,";");
+     while(record != NULL)
+     {
+         printf("Counter: %d", counter);
+        // printf("record : %s %d ",record, counter) ;    //here you can put the record into the array as per your requirement.
+         A[i][j++] = atoi(record) ;
+         record = strtok(NULL,";");
+         counter++;
+     }
+     ++i ;
    }
+}
+void print_matrix(){
+    for (int i = 0; i < dimensions; i++){
+        for (int j = 0; j < dimensions; j++){
+            printf("%2.1f \t", A[i][j]);
+        }
+        printf("\n");
+    }
 }
 
 int main(){
@@ -65,11 +72,19 @@ int main(){
         C[i] = (double *)malloc(dimensions * sizeof(double));
     }
 
-    set_matrix();
+    // set_matrix();
+    for (int i = 0; i < dimensions; i++){
+        for (int j = 0; j < dimensions; j++){
+            A[i][j] = 1e5;
+            B[i][j] = 1e5;
+        }
+    }
+    // printf("Matrix 50 25 %ld \n", sizeof(double));
+    // print_matrix();
     clock_t begin = clock();
     matrix_calculation(A, B);
     clock_t end = clock();
 
     double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
-    printf("%2.12f",time_spent);
+    printf("Time : %2.12f \n ",time_spent);
 }

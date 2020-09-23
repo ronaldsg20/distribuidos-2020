@@ -44,6 +44,22 @@ void print_matrix(){
     }
 }
 
+double** fscanmat(const char* fname){
+	FILE *fp = fopen(fname, "r");
+	int r, c, i, j;
+	r = scanf("%[,][^\n]");
+	fseek(fp, 0, SEEK_SET);
+	c = scanf("%[\n]");
+	fseek(fp, 0, SEEK_SET);
+	double **mat = (double**)(malloc(r * sizeof(double*)));
+	for(i = 0; i < r; i++)
+		mat[i] = (double*)(malloc(c * sizeof(double)));
+	for(i = 0; i < r; i++)
+		for(j = 0; j < c; j++)
+			scanf("%lf[^,\n]", (*(mat+i)+ j));
+	return mat;
+}
+
 void set_matrix(){ 
    char buffer[BUFFER] ;
    char *record,*line;
@@ -84,8 +100,14 @@ int main(){
         B[i] = (double *)malloc(dimensions * sizeof(double));
         C[i] = (double *)malloc(dimensions * sizeof(double));
     }
-    
-    set_matrix();
+
+    // set_matrix();
+    for (int i = 0; i < dimensions; i++){
+        for (int j = 0; j < dimensions; j++){
+            A[i][j] = 1e5;
+            B[i][j] = 1e5;
+        }
+    }
 
     blocks = floor(dimensions/THREADS);
     clock_t begin = clock();
@@ -98,6 +120,7 @@ int main(){
         }else{
             interval[i].fin = ((blocks)*(i+1));
         }
+        printf("Hilo %ld Inicio: %ld, Fin: %ld", i, interval[i].principio, interval[i].fin);
         pthread_create(&tids[i], NULL, matrix_calculation, &interval[i]);
     }
 
