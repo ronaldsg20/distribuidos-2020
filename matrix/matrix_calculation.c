@@ -15,7 +15,7 @@ void matrix_calculation(double **A, double **B){
     // COLUMNAS DE B
     for (int i = 0; i < dimensions; i++){
         //FILAS DE A
-        for (int j = 2; j < dimensions; j++){
+        for (int j = 0; j < dimensions; j++){
             //COLUMNA DE A POR SU FILA
             for (int k = 0; k < dimensions; k++){
                 c += A[j][k] * A[k][i];
@@ -31,8 +31,8 @@ void set_matrix(){
    char buffer[BUFFER * BUFFER * sizeof(double)] ;
    char *record,*line;
    int i=0,j=0;
-   int counter = 0;
-   FILE *fstream = fopen("../files/32.csv","r");
+//    int mat[dimensions][dimensions];
+   FILE *fstream = fopen("../files/1024.csv","r");
    if(fstream == NULL)
    {
       printf("\n file opening failed ");
@@ -42,11 +42,9 @@ void set_matrix(){
      record = strtok(line,";");
      while(record != NULL)
      {
-         printf("Counter: %d", counter);
         // printf("record : %s %d ",record, counter) ;    //here you can put the record into the array as per your requirement.
          A[i][j++] = atoi(record) ;
          record = strtok(NULL,";");
-         counter++;
      }
      ++i ;
    }

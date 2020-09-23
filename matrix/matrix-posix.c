@@ -4,12 +4,12 @@
 #include <pthread.h>
 #include <math.h>
 #include <string.h>
-#define THREADS 8
-#define BUFFER 256
+#define THREADS 16
+#define BUFFER 1024
 double **A;
 double **B;
 double **C;
-int dimensions = 256;
+int dimensions = 1024;
 
 typedef struct thread_data{
     long principio;
@@ -32,7 +32,7 @@ void *matrix_calculation(void *arg){
         }
     }
 
-    pthread_exit(NULL);
+    pthread_exit(0);
 }
 
 void print_matrix(){
@@ -65,7 +65,7 @@ void set_matrix(){
    char *record,*line;
    int i=0,j=0;
 //    int mat[dimensions][dimensions];
-   FILE *fstream = fopen("../files/256.csv","r");
+   FILE *fstream = fopen("../files/1024.csv","r");
    if(fstream == NULL)
    {
       printf("\n file opening failed ");
