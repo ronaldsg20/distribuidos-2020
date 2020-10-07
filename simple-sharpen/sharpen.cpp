@@ -10,58 +10,37 @@
 using namespace cv;
 using namespace std;
 //global variables
-int KERNEL, THREADS;
+int THREADS;
 int width,height;
 Mat output;
 Mat input;
+int KERNEL[3][3] = {{1, 0, 0},{0, 1, 0},{0,0,1}};
 
-void aplyBlur(int x, int y){
-    // collect the average data of neighbours 
-    int blue,green,red;
-    blue=green=red=0;
-    int n=0;
-    Vec3b pixel;
 
-    for(int i = x - (KERNEL/2); i < x+(KERNEL/2); i++)
-    {    
-        for (int j = y-(KERNEL/2); j < y+(KERNEL/2); j++)
-        {
-            //check if the point is in the image limits
-            if(0<=i && i<width-1 && 0<=j && j<height-1){
-                pixel = input.at<Vec3b>(Point(i,j));
-                blue += pixel.val[0];
-                green += pixel.val[1];
-                red += pixel.val[2];
-                n++;
+Mat applySharpen(Mat input, Size S){
+    Mat output = input.clone();
+    for(int x =0; x< S.width; x++){
+        for(int y=0; y< S.height; y++){
+            int blue,green,red;
+            blue=green=red=0;
+            Vec3b pixel;
+            int coeficent = 0;
+            for (int i = x - 1 ; i < x + 1; i++){
+                for (int j = y - 1; j < y + 1; j++){
+                    if(0<=i && i<S.width-1 && 0<=j && j<S.height-1){
+                        coeficent = KERNEL[i-x-1][j-y-1];
+                        pixel = input.at<Vec3b>(Point(i,j));
+                        blue += pixel.val[0] * coeficent;
+                        green += pixel.val[1] * coeficent;
+                        red += pixel.val[2] * coeficent;
+                    }
+                }
             }
+            Vec3b pixelSharpen = Vec3b(blue, green, red);
+            output.at<Vec3b>(Point(x,y))= pixelSharpen;
         }
     }
-    
-    if(n!=0){
-         //write the average on the output image
-        Vec3b pixelBlur = Vec3b(blue/n, green/n, red/n);
-        output.at<Vec3b>(Point(x,y))= pixelBlur;
-    }
-   
-}
-
-
-
-void* blur (void* arg)
-{
-    // aplies the blur average to every pixel on the interval
-    intptr_t tn = (intptr_t)arg;
-    int ini = (int)(width/THREADS)*(tn-1);
-	int fin = (int)(width/THREADS)+ini;
-    for (int i = ini; i < fin; i++)
-    {
-        for (int j = 0; j < height; j++)
-        {
-            aplyBlur(i,j);
-        }
-    }
-
-    pthread_exit(0);
+    return output;
 }
 
 
@@ -103,11 +82,7 @@ int main(int argc, char **argv)
     {
         inputVideo >> src;              // read
         if (src.empty()) break;         // check if at end
-        split(src, spl);                // process - extract only the correct channel
-        for (int i =0; i < 3; ++i)
-            if (i != channel)
-                spl[i] = Mat::zeros(S, spl[0].type());
-       merge(spl, res);
+        res = applySharpen(src, S);
        //outputVideo.write(res); //save or
        outputVideo << res;
     }
