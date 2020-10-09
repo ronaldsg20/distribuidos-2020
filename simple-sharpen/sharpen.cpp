@@ -14,22 +14,26 @@ int THREADS;
 int width,height;
 Mat output;
 Mat input;
-int KERNEL[3][3] = {{1, 0, 0},{0, 1, 0},{0,0,1}};
+float KERNEL[3][3] = {{-1,-1,-1},{-1,9,-1},{-1,-1,-1}};
 
 
 Mat applySharpen(Mat input, Size S){
     Mat output = input.clone();
     for(int x =0; x< S.width; x++){
         for(int y=0; y< S.height; y++){
-            int blue,green,red;
+            int loc = (x + y * S.width);
+            float blue,green,red;
             blue=green=red=0;
             Vec3b pixel;
             int coeficent = 0;
-            for (int i = x - 1 ; i < x + 1; i++){
-                for (int j = y - 1; j < y + 1; j++){
+            for (int i = 0 ; i < 3; i++){
+                for (int j = 0; j < 3; j++){
+                    int xloc = x+i;
+                    int yloc = y+j;
+                    int loc_conv = (xloc + S.width*yloc);
                     if(0<=i && i<S.width-1 && 0<=j && j<S.height-1){
-                        coeficent = KERNEL[i-x-1][j-y-1];
-                        pixel = input.at<Vec3b>(Point(i,j));
+                        coeficent = KERNEL[i][j];
+                        pixel = input.at<Vec3b>(loc_conv);
                         blue += pixel.val[0] * coeficent;
                         green += pixel.val[1] * coeficent;
                         red += pixel.val[2] * coeficent;
@@ -37,7 +41,7 @@ Mat applySharpen(Mat input, Size S){
                 }
             }
             Vec3b pixelSharpen = Vec3b(blue, green, red);
-            output.at<Vec3b>(Point(x,y))= pixelSharpen;
+            output.at<Vec3b>(loc)= pixelSharpen;
         }
     }
     return output;
