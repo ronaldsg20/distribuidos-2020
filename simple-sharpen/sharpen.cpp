@@ -14,7 +14,7 @@ int THREADS;
 int width,height;
 Mat output;
 Mat input;
-float KERNEL[3][3] = {{-1,-1,-1},{-1,9,-1},{-1,-1,-1}};
+float KERNEL[3][3] = {{1,0,-1},{0,0,0},{-1,0,1}};
 
 
 Mat applySharpen(Mat input, Size S){
