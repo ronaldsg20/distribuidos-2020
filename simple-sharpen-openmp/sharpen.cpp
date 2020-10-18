@@ -6,6 +6,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/videoio.hpp>
 #include <opencv2/highgui.hpp>
+#include <string>
 
 using namespace cv;
 using namespace std;
@@ -15,15 +16,15 @@ int video_fps, video_totalFrames;
 VideoCapture inputVideo;
 VideoWriter outputVideo;
 VideoWriter *outputVideos;
-Size size;
+Size S;
 float KERNEL[3][3] = {{1,0,-1},{0,0,0},{-1,0,1}};
 
 
 Mat applySharpen(Mat input){
     Mat output = input.clone();
-    for(int x =0; x< size.width; x++){
-        for(int y=0; y< size.height; y++){
-            int loc = (x + y * size.width);
+    for(int x =0; x< S.width; x++){
+        for(int y=0; y< S.height; y++){
+            int loc = (x + y * S.width);
             float blue,green,red;
             blue=green=red=0;
             Vec3b pixel;
@@ -32,8 +33,8 @@ Mat applySharpen(Mat input){
                 for (int j = 0; j < 3; j++){
                     int xloc = x+i;
                     int yloc = y+j;
-                    int loc_conv = (xloc + size.width*yloc);
-                    if(0<=i && i<size.width-1 && 0<=j && j<size.height-1){
+                    int loc_conv = (xloc + S.width*yloc);
+                    if(0<=i && i<S.width-1 && 0<=j && j<S.height-1){
                         coeficent = KERNEL[i][j];
                         pixel = input.at<Vec3b>(loc_conv);
                         blue += pixel.val[0] * coeficent;
@@ -49,22 +50,24 @@ Mat applySharpen(Mat input){
     return output;
 }
 
-
 void processFrames(int nThread) {
     // sabemos el hilo, numero de frames total
     unsigned long int ini = (int)(video_totalFrames/THREADS)*(nThread);
     unsigned long int fin = (int)(video_totalFrames/THREADS) + ini;
     printf("Hilo: %d Inicio: %ld , Fin: %ld \n", nThread, ini, fin);
 
+    Mat src, res;
     for(int i = ini; i < fin; i++){
-        Mat src, res;
+        printf("indice %d \n", i);
         // inputVideo >> src;              // read
+        src = inputVideo.set(1,i);
         if (src.empty()) break;         // check if at end
-        res = applySharpen(src);
-       //outputVideo.write(res); //save or
-       outputVideos[nThread] << res;
+        inputVideo.read(src);
+        imwrite("myframe"+std::to_string(i)+".jpg", src);
+        // res = applySharpen(src);
+    //    outputVideo.write(res); //save or
+        // outputVideo << res;
     }
-
 }
 
 int main(int argc, char **argv)
@@ -90,32 +93,39 @@ int main(int argc, char **argv)
     int ex = static_cast<int>(inputVideo.get(CAP_PROP_FOURCC));
     
     // get size of video
-    size = Size((int) inputVideo.get(CAP_PROP_FRAME_WIDTH),
+    S = Size((int) inputVideo.get(CAP_PROP_FRAME_WIDTH),
     (int) inputVideo.get(CAP_PROP_FRAME_HEIGHT));
 
     video_fps = inputVideo.get(CV_CAP_PROP_FPS);
-    video_totalFrames = inputVideo.get(CV_CAP_PROP_FRAME_COUNT);
+    video_totalFrames = inputVideo.get(7);
 
     printf("Processing video ... \n FPS: %d ,  Total Frames: %d \n", video_fps, video_totalFrames);
 
     // video Writter
-    outputVideos = new *VideoWriter[THREADS];
-    for (int i=1;i<THREADS+1;i++)
-    {
-        outputVideos[i-1] = new VideoWriter();
-    }
-    outputVideo.open(oFile, ex, inputVideo.get(CAP_PROP_FPS), size, true);
+    // outputVideos = new *VideoWriter[THREADS];
+    // for (int i=1;i<THREADS+1;i++)
+    // {
+    //     outputVideos[i-1] = new VideoWriter();
+    // }
+    outputVideo.open(oFile, ex, inputVideo.get(CAP_PROP_FPS), S, true);
      
     #pragma omp parallel num_threads(THREADS)
 	{
         int j = omp_get_thread_num();
         processFrames(j);
+        #pragma omp barrier
     }
 
 
+    // Get image example
+    // Mat src, res;
+    // src = inputVideo.set(1,100);
+    // inputVideo.read(src);
+    // imwrite("myframe.jpg", src);
+    
 
 
-    Mat src, res;
+    // Mat src, res;
 /*     for(int i=0;i<video_totalFrames; i++) //Show the image captured in the window and repeat
     {
         inputVideo >> src;              // read
