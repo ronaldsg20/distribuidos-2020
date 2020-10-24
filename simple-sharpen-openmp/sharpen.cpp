@@ -50,7 +50,7 @@ Mat applySharpen(Mat input){
     return output;
 }
 
-void processFrames(int nThread) {
+void processFrames(int nThread, VideoCapture inputVideo) {
     // sabemos el hilo, numero de frames total
     unsigned long int ini = (int)(video_totalFrames/THREADS)*(nThread);
     unsigned long int fin = (int)(video_totalFrames/THREADS) + ini;
@@ -109,12 +109,12 @@ int main(int argc, char **argv)
     // }
     outputVideo.open(oFile, ex, inputVideo.get(CAP_PROP_FPS), S, true);
      
-    #pragma omp parallel num_threads(THREADS)
-	{
-        int j = omp_get_thread_num();
-        processFrames(j);
-        #pragma omp barrier
-    }
+    // #pragma omp parallel num_threads(THREADS)
+	// {
+    int j = omp_get_thread_num();
+    processFrames(j, inputVideo);
+    //     #pragma omp barrier
+    // }
 
 
     // Get image example
