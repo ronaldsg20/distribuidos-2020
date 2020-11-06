@@ -34,7 +34,8 @@ void applySharpen(int *input, int frameIndex){
                     int xloc = x+i;
                     int yloc = y+j;
                     int loc_conv = (xloc + S.width*yloc);
-                    if(0<=i && i<S.width-1 && 0<=j && j<S.height-1){
+                    // printf("x: %d - y: %d loc_conv: %d \n",xloc,yloc, loc_conv);
+                    if(0<=xloc && xloc<S.width-1 && 0<=yloc && yloc<S.height-1){
                         coeficent = KERNEL[i][j];
                         // pixel = input.at<Vec3b>(loc_conv);
                         blue += input[(yloc*S.width*3)+(xloc * 3) + 0] * coeficent;
@@ -46,6 +47,7 @@ void applySharpen(int *input, int frameIndex){
             matrixOutput[frameIndex][(y*S.width*3)+(x * 3) + 0] = blue;
             matrixOutput[frameIndex][(y*S.width*3)+(x * 3) + 1] = green;
             matrixOutput[frameIndex][(y*S.width*3)+(x * 3) + 2] = red;
+            // printf("Sharpen applied pixel x: %d - y: %d \n", x, y);
         }
     }
 }
@@ -72,7 +74,29 @@ void processFrames(int nThread) {
         // outputVideo << res;
     }
 }
+void setVideoFrame(Mat frameInput, int frameIndex);
 
+void setVideoMatrix(VideoCapture inputVideo){
+    Mat src;
+    for (int i = 0; i < video_totalFrames; i++){
+        inputVideo.set(1,i);
+        inputVideo.read(src);
+        if (src.empty()){
+            printf("Src empty");
+        }
+        setVideoFrame(src, i);
+    }
+}
+
+void setVideoFrame(Mat frameInput, int frameIndex){
+    for(int i=0;i<S.width;i++){
+       for(int j=0;j<S.height;j++){
+        videoMatrix[frameIndex][(j*S.width*3)+(i*3)+0]= frameInput.at<Vec3b>(i,j)[0];
+        videoMatrix[frameIndex][(j*S.width*3)+(i*3)+1]= frameInput.at<Vec3b>(i,j)[1];
+        videoMatrix[frameIndex][(j*S.width*3)+(i*3)+2]= frameInput.at<Vec3b>(i,j)[2];
+       }
+     }
+}
 int main(int argc, char **argv)
 {
 
@@ -99,6 +123,8 @@ int main(int argc, char **argv)
     S = Size((int) inputVideo.get(CAP_PROP_FRAME_WIDTH),
     (int) inputVideo.get(CAP_PROP_FRAME_HEIGHT));
 
+    printf("Frame size width: %d - height: %d", S.width, S.height);
+
     video_fps = inputVideo.get(CV_CAP_PROP_FPS);
     video_totalFrames = inputVideo.get(7);
 
@@ -112,39 +138,36 @@ int main(int argc, char **argv)
 
     printf("Processing video ... \n FPS: %d ,  Total Frames: %d \n", video_fps, video_totalFrames);
 
+    // fill the matrix of array frames
+    setVideoMatrix(inputVideo);
+
     outputVideo.open(oFile, ex, inputVideo.get(CAP_PROP_FPS), S, true);
 
     #pragma omp parallel num_threads(THREADS)
 	{
         int j = omp_get_thread_num();
         processFrames(j);
-        #pragma omp barrier
     }
+
+    // fill the output video with the matrix of array frames
+
+    // for (int frameIndex = 0; frameIndex < video_totalFrames; frameIndex++){
+    //     Mat res;
+    //     inputVideo.set(1,frameIndex);
+    //     inputVideo.read(res);
+    //     if (res.empty()){
+    //         printf("Src empty");
+    //     }
+    //     for(int i=0;i<S.width;i++){
+    //         for(int j=0;j<S.height;j++){
+    //             videoMatrix[frameIndex][(j*S.width*3)+(i*3)+0]= res.at<Vec3b>(i,j)[0];
+    //             videoMatrix[frameIndex][(j*S.width*3)+(i*3)+1]= res.at<Vec3b>(i,j)[1];
+    //             videoMatrix[frameIndex][(j*S.width*3)+(i*3)+2]= res.at<Vec3b>(i,j)[2];
+    //         }
+    //     }
+    //     outputVideo << res;
+    // }
+
     return 0;
 
-}
-
-void setVideoFrame(Mat frameInput, int frameIndex);
-
-int setVideoMatrix(VideoCapture inputVideo){
-    Mat src;
-    for (int i = 0; i < video_totalFrames; i++){
-        printf("indice %d \n", i);
-        inputVideo.set(1,i);
-        inputVideo.read(src);
-        if (src.empty()){
-            printf("Src empty");
-        }
-        setVideoFrame(src, i);
-    }
-}
-
-void setVideoFrame(Mat frameInput, int frameIndex){
-    for(int i=0;i<S.width;i++){
-       for(int j=0;j<S.height;j++){
-        videoMatrix[frameIndex][(j*S.width*3)+(i*3)+0]= frameInput.at<Vec3b>(i,j)[0];
-        videoMatrix[frameIndex][(j*S.width*3)+(i*3)+1]= frameInput.at<Vec3b>(i,j)[1];
-        videoMatrix[frameIndex][(j*S.width*3)+(i*3)+2]= frameInput.at<Vec3b>(i,j)[2];
-       }
-     }
 }
