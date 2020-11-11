@@ -15,7 +15,7 @@ int THREADS;
 int video_fps, video_totalFrames;
 VideoCapture inputVideo;
 VideoWriter outputVideo;
-int *inputVideoArray, *outputVideoArray;
+unsigned char *inputVideoArray, *outputVideoArray;
 Size S;
 float KERNEL[3][3] = {{1,0,-1},{0,0,0},{-1,0,1}};
 
@@ -114,8 +114,8 @@ int main(int argc, char **argv)
     video_fps = inputVideo.get(CV_CAP_PROP_FPS);
     video_totalFrames = 75; //inputVideo.get(7);
 
-    inputVideoArray = (int *)malloc(video_totalFrames * S.width * S.height * 3 * sizeof(int));
-    outputVideoArray = (int *)malloc(video_totalFrames * S.width * S.height * 3 * sizeof(int));
+    inputVideoArray = (unsigned char *)malloc(video_totalFrames * S.width * S.height * 3 * sizeof(char));
+    outputVideoArray = (unsigned char *)malloc(video_totalFrames * S.width * S.height * 3 * sizeof(char));
 
 
     printf("Processing video ... \n FPS: %d ,  Total Frames: %d \n", video_fps, video_totalFrames);
