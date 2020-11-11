@@ -118,10 +118,13 @@ int main(int argc, char **argv)
     outputVideoArray = (unsigned char *)malloc(video_totalFrames * S.width * S.height * 3 * sizeof(char));
 
 
-    printf("Processing video ... \n FPS: %d ,  Total Frames: %d \n", video_fps, video_totalFrames);
+    printf("Processing video ... \n FPS: %d ,  Total Frames: %d \n Threads: %d \n", video_fps, video_totalFrames,THREADS);
 
     // fill the matrix of array frames
     setVideoMatrix(inputVideo);
+
+    // start the clock
+    clock_t begin = clock();
 
     #pragma omp parallel num_threads(THREADS)
     {
@@ -129,7 +132,10 @@ int main(int argc, char **argv)
         processFrames(j);
     }
 
-    printf("done \n");
+    clock_t end = clock();
+    double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
+    printf("Threads: %d, Time: %2.4f \n", THREADS, time_spent);
+
     outputVideo.open(oFile, ex, inputVideo.get(CAP_PROP_FPS), S, true);
 
     // fill the output video with the matrix of array frames
