@@ -26,17 +26,14 @@ void applySharpen(int frameIndex){
             int loc = (x + y * S.width);
             int blue,green,red;
             blue=green=red=0;
-            Vec3b pixel;
             int coeficent = 0;
             for (int i = 0 ; i < 3; i++){
                 for (int j = 0; j < 3; j++){
                     int xloc = x+i;
                     int yloc = y+j;
                     int loc_conv = (xloc + S.width*yloc);
-                    // printf("x: %d - y: %d loc_conv: %d \n",xloc,yloc, loc_conv);
                     if(0<=xloc && xloc<S.width-1 && 0<=yloc && yloc<S.height-1){
                         coeficent = KERNEL[i][j];
-                        // pixel = input.at<Vec3b>(loc_conv);
                         blue += inputVideoArray[(frameIndex*S.width*S.height*3)+(xloc*S.height*3)+(yloc*3)+0] *coeficent;
                         green += inputVideoArray[(frameIndex*S.width*S.height*3)+(xloc*S.height*3)+(yloc*3)+1] *coeficent;
                         red += inputVideoArray[(frameIndex*S.width*S.height*3)+(xloc*S.height*3)+(yloc*3)+2] *coeficent;
