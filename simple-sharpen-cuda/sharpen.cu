@@ -35,16 +35,21 @@ VideoCapture inputVideo;
 VideoWriter outputVideo;
 
 // function aviable only on the device
- __device__ void applySharpen(int frameIndex, unsigned char *input, unsigned char *output, int *kernel,int *w, int *h){
-    for(int x =0; x< *w; x++){
-        for(int y=0; y< *h; y++){
+__device__ void applySharpen(int rowStart,int rowEnd, unsigned char *input, unsigned char *output, int *kernel,int *w, int *h, int *totalFrames){
+    int frameIndex = 0;
+    for(int y=rowStart; y< rowEnd; y++){
+        frameIndex = (y/((int) *h));
+        int yframe = y - (frameIndex * ((int)*h));
+        for(int x =0; x< *w; x++){
             int blue,green,red;
             blue=green=red=0;
             int coeficent = 0;
             for (int i = 0 ; i < 3; i++){
                 for (int j = 0; j < 3; j++){
+                    // para un frameIndex = a (1)   =>  row0 = h * a (1080 * 1) = 1080
+                    // y = 1100   frameIndex = 1  y'= 20 = 1100 - (frameIndex * 1080)
                     int xloc = x+i;
-                    int yloc = y+j;
+                    int yloc = yframe+j;
                     if(0<=xloc && xloc<((int)*w)-1 && 0<=yloc && yloc<((int)*h)-1){
                         coeficent = kernel[(i*3)+j];
                         blue += input[(frameIndex* ((int)*w) *((int)*h)*3)+(xloc*((int)*h)*3)+(yloc*3)+0] *coeficent;
@@ -53,13 +58,13 @@ VideoWriter outputVideo;
                     }
                 }
             }
-            output[(frameIndex*((int)*w)*((int)*h)*3)+(x*((int)*h)*3)+(y*3)+0] = blue;
-            output[(frameIndex*((int)*w)*((int)*h)*3)+(x*((int)*h)*3)+(y*3)+1] = green;
-            output[(frameIndex*((int)*w)*((int)*h)*3)+(x*((int)*h)*3)+(y*3)+2] = red;
+            output[(frameIndex*((int)*w)*((int)*h)*3)+(x*((int)*h)*3)+(yframe*3)+0] = blue;
+            output[(frameIndex*((int)*w)*((int)*h)*3)+(x*((int)*h)*3)+(yframe*3)+1] = green;
+            output[(frameIndex*((int)*w)*((int)*h)*3)+(x*((int)*h)*3)+(yframe*3)+2] = red;
             // printf("Sharpen applied pixel x: %d - y: %d \n", x, y);
         }
     }
- }
+}
 
  /**
   * CUDA Kernel Device code
@@ -68,14 +73,18 @@ VideoWriter outputVideo;
  /*****************************************************************************/
  __global__ void sharpen(unsigned char *input,unsigned char *output, int *kernel, int *totalThreads, int *width, int *height, int *totalFrames){
     int tn = (blockDim.x * blockIdx.x) + threadIdx.x;
-    int ini = (int)(((int) *totalFrames)/((int) *totalThreads))*(tn);
-    int fin = (int)(((int) *totalFrames)/((int) *totalThreads)) + ini;
+    // int ini = (int)(((int) *totalFrames)/((int) *totalThreads))*(tn);
+    // int fin = (int)(((int) *totalFrames)/((int) *totalThreads)) + ini;
+    int ri = (int)((((int) *totalFrames) * ((int) *height))/((int) *totalThreads))*(tn);
+    int rf = (int)((((int) *totalFrames) * ((int) *height))/((int) *totalThreads)) + ri;
     // printf("[%d] %d - %d \n", tn, ((int) *totalFrames), ((int) *totalThreads));
-    //printf("[%d] ini: %d - fin: %d \n",tn, ini, fin);
-    if(tn<*totalFrames){
-        for(int i = ini; i < fin; i++){
-            applySharpen(i, input, output, kernel,width, height);
-        }
+    // printf("[%d] ini: %d - fin: %d \n",tn, ri, rf);
+    if(tn < (int) *totalFrames * (int) *height ){
+        // printf("[%d] ini: %d - fin: %d \n",tn, ri, rf);
+        applySharpen(ri, rf, input, output, kernel,width, height, totalFrames);
+        // for(int i = ini; i < fin; i++){
+        //     applySharpen(i, input, output, kernel,width, height);
+        // }
     }
  }
 
@@ -129,7 +138,7 @@ void setVideoFrame(Mat frameInput, int frameIndex){
      //********************read parameters**********************
      if ( argc != 4 )
     {
-        printf("usage: ./sharpen <Video_Path> <Video_out_Path> <Threads>n");
+        printf("usage: ./sharpen <Video_Path> <Video_out_Path> <ThreadsPerBlock>n");
         return -1;
     }
 
@@ -165,7 +174,7 @@ void setVideoFrame(Mat frameInput, int frameIndex){
 
    int blocks = deviceProp.multiProcessorCount;
 
-   int h_threadsPerBlock = h_video_totalFrames/blocks;
+   int h_threadsPerBlock = atoi(argv[3]);//(h_video_totalFrames*h_height)/blocks;
    h_threads = h_threadsPerBlock * blocks;
    //printf("Blocks : %d   -  threads per block %d  - TOTAL threads: %d",blocks,h_threads,blocks*h_threads);
 
@@ -270,7 +279,7 @@ void setVideoFrame(Mat frameInput, int frameIndex){
     }
     printf("CudaMemcpy host to device done.\n");
 
-    printf("Blocks : %d , threads per block: %d\n",blocks, h_threads);
+    printf("Blocks : %d , threads per block: %d\n",blocks, h_threadsPerBlock);
 
     // begin clock
     clock_t begin = clock();

@@ -106,16 +106,16 @@ int main(int argc, char **argv)
     S = Size((int) inputVideo.get(CAP_PROP_FRAME_WIDTH),
     (int) inputVideo.get(CAP_PROP_FRAME_HEIGHT));
 
-    printf("Frame size width: %d - height: %d \n", S.width, S.height);
+    // printf("Frame size width: %d - height: %d \n", S.width, S.height);
 
     video_fps = inputVideo.get(CV_CAP_PROP_FPS);
-    video_totalFrames = 75; //inputVideo.get(7);
+    video_totalFrames = 50; //inputVideo.get(7);
 
     inputVideoArray = (unsigned char *)malloc(video_totalFrames * S.width * S.height * 3 * sizeof(char));
     outputVideoArray = (unsigned char *)malloc(video_totalFrames * S.width * S.height * 3 * sizeof(char));
 
 
-    printf("Processing video ... \n FPS: %d ,  Total Frames: %d \n Threads: %d \n", video_fps, video_totalFrames,THREADS);
+    // printf("Processing video ... \n FPS: %d ,  Total Frames: %d \n Threads: %d \n", video_fps, video_totalFrames,THREADS);
 
     // fill the matrix of array frames
     setVideoMatrix(inputVideo);
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
     clock_t end = clock();
     double time_spent = (double) (end - begin) / CLOCKS_PER_SEC;
-    printf("Threads: %d, Time: %2.4f \n", THREADS, time_spent);
+    printf("Threads: %d, Time: %f \n", THREADS, time_spent);
 
     outputVideo.open(oFile, ex, inputVideo.get(CAP_PROP_FPS), S, true);
 
